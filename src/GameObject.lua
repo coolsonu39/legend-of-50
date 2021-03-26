@@ -34,7 +34,12 @@ function GameObject:init(def, x, y)
 end
 
 function GameObject:update(dt)
-
+    -- this will be set in Room.lua
+    if self.isPicked then
+        self.x = self.player.x
+        self.y = self.player.y - 12
+        -- print('picked up the pot')
+    end
 end
 
 function GameObject:render(adjacentOffsetX, adjacentOffsetY)

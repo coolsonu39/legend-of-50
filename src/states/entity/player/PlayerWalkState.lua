@@ -17,7 +17,8 @@ function PlayerWalkState:init(player, dungeon)
     self.entity.offsetX = 0
 end
 
-function PlayerWalkState:update(dt)
+-- extract out movement to override by pot walk
+function PlayerWalkState:movement(dt)
     if love.keyboard.isDown('left') then
         self.entity.direction = 'left'
         self.entity:changeAnimation('walk-left')
@@ -37,6 +38,10 @@ function PlayerWalkState:update(dt)
     if love.keyboard.wasPressed('space') then
         self.entity:changeState('swing-sword')
     end
+end
+
+function PlayerWalkState:update(dt)
+    self:movement(dt)
 
     -- perform base collision detection against walls
     EntityWalkState.update(self, dt)

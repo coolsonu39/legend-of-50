@@ -104,6 +104,46 @@ function Room:generateObjects()
 
     -- add to list of objects in scene (only one switch for now)
     table.insert(self.objects, switch)
+
+    -- spec2 (generate pots)
+    local numberOfPots = math.random(8)
+    for i = 1, numberOfPots do
+        local pot = GameObject(
+            GAME_OBJECT_DEFS['pot'],
+            math.random(MAP_RENDER_OFFSET_X + TILE_SIZE,
+                        VIRTUAL_WIDTH - TILE_SIZE * 2 - 16),
+            math.random(MAP_RENDER_OFFSET_Y + TILE_SIZE,
+                        VIRTUAL_HEIGHT - (VIRTUAL_HEIGHT - MAP_HEIGHT * TILE_SIZE) + MAP_RENDER_OFFSET_Y - TILE_SIZE - 16)
+        )
+        pot.isPicked, pot.player = false, self.player
+        pot.onCollide = function()
+            --dont allow player to move over the pot
+            if not pot.isPicked then --no need to check collision once the pot is picked up
+                if self.player.direction == 'left' then
+                    self.player.x = self.player.x + 1
+                    -- print('collide from right')
+                elseif self.player.direction == 'right' then
+                    self.player.x = self.player.x - 1
+                    -- print('collide from left')
+                elseif self.player.direction == 'up' then
+                    self.player.y = self.player.y + 1
+                    -- print('collide from down')
+                elseif self.player.direction == 'down' then
+                    self.player.y = self.player.y - 1
+                    -- print('collide from up')
+                end
+            end
+
+            if love.keyboard.wasPressed('return') then
+                pot.player = self.player
+                pot.isPicked = true
+                self.player:changeState('pot-lift')  
+            end
+        end
+        table.insert(self.objects, pot)
+    end
+
+    --spec2 changes end
 end
 
 --[[
@@ -162,7 +202,7 @@ function Room:update(dt)
             --spec1 (spawn a heart at place of entity after it died)
             if entity.dead == false then -- to make sure it only spawns once
                 local willHeartSpawn = math.random(5) == 1
-                if willHeartSpawn then
+                if willHeartSpawn and not location then --only allow one heart at a time
                     -- print('heart spawned')
                     local heart = GameObject(
                         GAME_OBJECT_DEFS['heart'],
@@ -173,13 +213,14 @@ function Room:update(dt)
                     -- function to increase health and remove heart from the table
                     heart.onCollide = function()
                         self.player.health = math.min(6, self.player.health + 2)
-                        table.remove(self.objects, heart.location)
+                        table.remove(self.objects, location)
+                        location = false
                         gSounds['hit-enemy']:play()
                     end
                 
                     -- add to list of objects in scene (only one switch for now)
                     table.insert(self.objects, heart)
-                    heart.location = #self.objects
+                    location = #self.objects
                 end
             end
             --spec1 end
@@ -209,6 +250,7 @@ function Room:update(dt)
         if self.player:collides(object) then
             object:onCollide()
         end
+        
     end
 end
 
@@ -263,6 +305,13 @@ function Room:render()
     end
 
     love.graphics.setStencilTest()
+
+    -- only render the pot player is holding above/after rendering the player
+    for k, object in pairs(self.objects) do
+        if object.isPicked then
+            object:render(self.adjacentOffsetX, self.adjacentOffsetY)
+        end
+    end
 
     --
     -- DEBUG DRAWING OF STENCIL RECTANGLES

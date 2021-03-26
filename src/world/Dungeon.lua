@@ -48,6 +48,7 @@ end
     Prepares for the camera shifting process, kicking off a tween of the camera position.
 ]]
 function Dungeon:beginShifting(shiftX, shiftY)
+    self.player:changeState('idle') -- if hes holding pot spec2
 
     -- commence shifting and create a new room to transition to
     self.shifting = true

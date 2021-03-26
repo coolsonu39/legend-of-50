@@ -24,8 +24,20 @@ GAME_OBJECT_DEFS = {
             }
         }
     },
+    -- spex 2 (define a pot)
     ['pot'] = {
-        -- TODO
+        type = 'pot',
+        texture = 'tiles',
+        frame = 14,
+        width = 16,
+        height = 16,
+        solid = true,
+        defaultState = 'idle',
+        states = {
+            ['idle'] = {
+                frame = 14
+            }
+        }
     },
     -- spec 1 (define a heart)
     ['heart'] = {
