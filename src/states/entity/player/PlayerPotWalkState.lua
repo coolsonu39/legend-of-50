@@ -18,7 +18,8 @@ function PlayerPotWalkState:movement(dt)
         self.entity:changeState('pot-idle')
     end
 
-    -- if love.keyboard.wasPressed('space') then
-
-    -- end
+    if love.keyboard.wasPressed('space') then
+            self.entity.pot.preThrow = true
+            self.entity:changeState('idle')
+    end
 end

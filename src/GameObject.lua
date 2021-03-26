@@ -35,7 +35,7 @@ end
 
 function GameObject:update(dt)
     -- this will be set in Room.lua
-    if self.isPicked then
+    if self.isPicked and not self.preThrow then
         self.x = self.player.x
         self.y = self.player.y - 12
         -- print('picked up the pot')

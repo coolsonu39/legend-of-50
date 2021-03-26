@@ -135,6 +135,7 @@ function Room:generateObjects()
             end
 
             if love.keyboard.wasPressed('return') then
+                self.player.pot = pot
                 pot.player = self.player
                 pot.isPicked = true
                 self.player:changeState('pot-lift')  
@@ -201,7 +202,7 @@ function Room:update(dt)
 
             --spec1 (spawn a heart at place of entity after it died)
             if entity.dead == false then -- to make sure it only spawns once
-                local willHeartSpawn = math.random(5) == 1
+                local willHeartSpawn = math.random(2) == 1 --heartfreq
                 if willHeartSpawn and not location then --only allow one heart at a time
                     -- print('heart spawned')
                     local heart = GameObject(
@@ -214,8 +215,7 @@ function Room:update(dt)
                     heart.onCollide = function()
                         self.player.health = math.min(6, self.player.health + 2)
                         table.remove(self.objects, location)
-                        location = false
-                        gSounds['hit-enemy']:play()
+                        location = nil
                     end
                 
                     -- add to list of objects in scene (only one switch for now)
@@ -250,6 +250,67 @@ function Room:update(dt)
         if self.player:collides(object) then
             object:onCollide()
         end
+
+        -- spec3
+        if object.preThrow == true then
+            object.initialx = object.x
+            object.initialy = object.y
+            object.throw = true
+            object.preThrow = 'done'
+            if self.player.direction == 'left' then
+                object.dx = -100 * dt
+                object.dy = 0
+            elseif self.player.direction == 'right' then
+                object.dx = 100 * dt
+                object.dy = 0
+            elseif self.player.direction == 'up' then
+                object.dy = -100 * dt
+                object.dx = 0
+            else
+                object.dy = 100 * dt
+                object.dx = 0
+            end
+        end
+
+        if object.throw then
+            -- damage & break after colliding with enemies
+            for i = #self.entities, 1, -1 do
+                local entity = self.entities[i]
+                if entity:collides(object) then
+                    gSounds['hit-enemy']:play()
+                    self.objects[k] = nil
+                    entity:damage(1)
+                end
+            end
+
+            -- break if travelled more than 4 tiles
+            if object.x > object.initialx + TILE_SIZE * 4 then
+                object.dx = 0
+                self.objects[k] = nil
+            elseif object.x < object.initialx - TILE_SIZE * 4 then
+                object.dx = 0
+                self.objects[k] = nil
+            elseif object.y > object.initialy + TILE_SIZE * 4 then
+                object.dx = 0
+                self.objects[k] = nil
+            elseif object.y < object.initialy - TILE_SIZE * 4 then
+                object.dx = 0
+                self.objects[k] = nil
+            end
+
+            -- break when collide with walls
+            if object.x < self.renderOffsetX + self.adjacentOffsetX or
+               object.x > (self.width - 1) * TILE_SIZE + self.renderOffsetX + self.adjacentOffsetX or
+               object.y < self.renderOffsetY + self.adjacentOffsetY or
+               object.y > (self.height - 1) * TILE_SIZE + self.renderOffsetY + self.adjacentOffsetY then
+                self.objects[k] = nil
+            end
+                
+            -- update object's x & y according, this results in actual throwing
+            object.x = object.x + object.dx
+            object.y = object.y + object.dy
+        end
+
         
     end
 end
